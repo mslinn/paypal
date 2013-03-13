@@ -36,6 +36,7 @@ object MyPayPalPDT extends PayPalPDT {
 }
 ​````
 
+
 `pdtResponse` allows you to determine the behavior of you application upon receiving the reponse from PayPal.
 
 IPN Example
