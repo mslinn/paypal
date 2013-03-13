@@ -3,11 +3,14 @@ package paypal
 import paypal.{PaypalResponse, PaypalRequest, PaypalBase}
 import play.api.mvc.RequestHeader
 
-/** Handle the incoming request, dispatch the IPN callback, and handle the subsequent response. */
+/** Handle the incoming request, dispatch the IPN callback, and handle the subsequent response.
+  * This is treated like a case class, but because it is really only an object and a companion class, it can be extended.
+  * It probably makes more sense to shred this and rewrite */
 object PaypalIPN {
   /** @todo Really need to make sure that multiple custom parameters can be mapped through.
     * The current solution is not good! */
-  private def paramsAsPayloadList(request: RequestHeader): Seq[(String, String)] =
+  // todo rewrite this recursive lookup so it works with Play
+   private def paramsAsPayloadList(request: RequestHeader): Seq[(String, String)] =
     (for (p <- request.body.asFormUrlEncoded; mp <- p._2.map(v => (p._1, v))) yield (mp._1, mp._2)).toList
 
   def apply(request: RequestHeader, mode: PaypalMode, connection: PaypalConnection) = {

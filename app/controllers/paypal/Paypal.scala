@@ -28,12 +28,10 @@ import java.util.concurrent.TimeUnit
 import play.api.Logger
 import play.api.mvc.{Action, RequestHeader, Controller}
 
-/**
- * A parameter set that takes request parameters and assigns them
- * to properties of this class
- *
- * @param form The parameters from the incoming request
- */
+// todo This file still needs a lot of shredding done to it
+
+/** A parameter set that takes request parameters and assigns them to properties of this class
+ * @param form The parameters from the incoming request */
 private[paypal] class PayPalInfo(form: Map[String, Seq[String]]) {
   val formNVP = new FormNVP(form)
   val itemName           = formNVP.maybeGetString("item_name")
@@ -106,35 +104,37 @@ private[paypal] class PayPalInfo(form: Map[String, Seq[String]]) {
   val auctionClosingDate = formNVP.maybeGetString("auction_closing_date")
   val auctionMultiItem   = formNVP.maybeGetString("auction_multi_item")
   val auctionBuyerId     = formNVP.maybeGetString("auction_buyer_id")
+
   override def toString: String = {
-  val s1 = "itemName={"+ itemName +"}, business={"+ business +"}, itemNumber={"+ itemNumber +"}, paymentStatus={"+
-    paymentStatus +"}, mcGross={"+ mcGross +"}, paymentCurrency={"+ paymentCurrency +"}, txnId={"+ txnId +
-    "}, receiverEmail={"+ receiverEmail
-  val s2 = "}, receiverId={"+ receiverId +"}, quantity={"+ quantity +"}, numCartItems={"+ numCartItems +
-    "}, paymentDate={"+ paymentDate +"}, firstName={"+ firstName +"}, lastName={"+ lastName +"}, paymentType={"+
-    paymentType +"}, paymentGross={"+ paymentGross +"}, paymentFee={"+ paymentFee +"}, settleAmount={"+ settleAmount +
-    "}, memo={"+ memo +"}, payerEmail={"+ payerEmail
-  val s3 = "}, txnType={"+ txnType +"}, payerStatus={"+ payerStatus +"}, addressStreet={"+ addressStreet +
-    "}, addressCity={"+ addressCity +"}, addressState={"+ addressState +"}, addressZip={"+ addressZip +
-    "}, addressCountry={"+ addressCountry +"}, addressStatus={"+ addressStatus +"}, tax={"+ tax +"}, optionName1={"+
-    optionName1 +"}, optionSelection1={"+ optionSelection1 +"}, optionName2={"+ optionName2 +"}, optionSelection2={"+ optionSelection2
-  val s4 = "}, forAuction={"+ forAuction +"}, invoice={"+ invoice +"}, custom={"+ custom +"}, notifyVersion={"+
-    notifyVersion +"}, verifySign={"+ verifySign +"}, payerBusinessName={"+ payerBusinessName +"}, payerId={"+
-    payerId +"}, mcCurrency={"+ mcCurrency +"}, mcFee={"+ mcFee +"}, exchangeRate={"+ exchangeRate +"}, settleCurrency={"+ settleCurrency
-  val s5 = "}, parentTxnId={"+ parentTxnId +"}, pendingReason={"+ pendingReason +"}, reasonCode={"+ reasonCode +
-    "}, subscrId={"+ subscrId +"}, subscrDate={"+ subscrDate +"}, subscrEffective={"+ subscrEffective +"}, period1={"+
-    period1+"}, period2={"+period2+"}, period3={"+period3+"}, amount={"+ amount +"}, amount={"+amount1+"}, amount2={"+
-    amount2+"}, amount3={"+amount3
-  val s6 = "}, mcAmount1={"+mcAmount1+"}, mcAmount2={"+mcAmount2+"}, mcAmount3={"+mcAmount3+"},recurring={"+ recurring +
-    "}, reattempt,retryAt={"+ retryAt +"}, recurTimes,username={"+ username +"},password={"+ password +
-    "}, auctionClosingDate={"+ auctionClosingDate +"}, auctionMultiItem={"+ auctionMultiItem +"}, auctionBuyerId={"+auctionBuyerId+"}"
-  s1 + s2 + s3 + s4 + s5 + s6
+    val s1 = "itemName={"+ itemName +"}, business={"+ business +"}, itemNumber={"+ itemNumber +"}, paymentStatus={"+
+      paymentStatus +"}, mcGross={"+ mcGross +"}, paymentCurrency={"+ paymentCurrency +"}, txnId={"+ txnId +
+      "}, receiverEmail={"+ receiverEmail
+    val s2 = "}, receiverId={"+ receiverId +"}, quantity={"+ quantity +"}, numCartItems={"+ numCartItems +
+      "}, paymentDate={"+ paymentDate +"}, firstName={"+ firstName +"}, lastName={"+ lastName +"}, paymentType={"+
+      paymentType +"}, paymentGross={"+ paymentGross +"}, paymentFee={"+ paymentFee +"}, settleAmount={"+ settleAmount +
+      "}, memo={"+ memo +"}, payerEmail={"+ payerEmail
+    val s3 = "}, txnType={"+ txnType +"}, payerStatus={"+ payerStatus +"}, addressStreet={"+ addressStreet +
+      "}, addressCity={"+ addressCity +"}, addressState={"+ addressState +"}, addressZip={"+ addressZip +
+      "}, addressCountry={"+ addressCountry +"}, addressStatus={"+ addressStatus +"}, tax={"+ tax +"}, optionName1={"+
+      optionName1 +"}, optionSelection1={"+ optionSelection1 +"}, optionName2={"+ optionName2 +"}, optionSelection2={"+ optionSelection2
+    val s4 = "}, forAuction={"+ forAuction +"}, invoice={"+ invoice +"}, custom={"+ custom +"}, notifyVersion={"+
+      notifyVersion +"}, verifySign={"+ verifySign +"}, payerBusinessName={"+ payerBusinessName +"}, payerId={"+
+      payerId +"}, mcCurrency={"+ mcCurrency +"}, mcFee={"+ mcFee +"}, exchangeRate={"+ exchangeRate +"}, settleCurrency={"+ settleCurrency
+    val s5 = "}, parentTxnId={"+ parentTxnId +"}, pendingReason={"+ pendingReason +"}, reasonCode={"+ reasonCode +
+      "}, subscrId={"+ subscrId +"}, subscrDate={"+ subscrDate +"}, subscrEffective={"+ subscrEffective +"}, period1={"+
+      period1+"}, period2={"+period2+"}, period3={"+period3+"}, amount={"+ amount +"}, amount={"+amount1+"}, amount2={"+
+      amount2+"}, amount3={"+amount3
+    val s6 = "}, mcAmount1={"+mcAmount1+"}, mcAmount2={"+mcAmount2+"}, mcAmount3={"+mcAmount3+"},recurring={"+ recurring +
+      "}, reattempt,retryAt={"+ retryAt +"}, recurTimes,username={"+ username +"},password={"+ password +
+      "}, auctionClosingDate={"+ auctionClosingDate +"}, auctionMultiItem={"+ auctionMultiItem +"}, auctionBuyerId={"+auctionBuyerId+"}"
+    s1 + s2 + s3 + s4 + s5 + s6
   }
 }
 
 /** As the HTTP Commons HttpClient class is by definition very mutable, we provide this factory method to produce an
   * instance that we can assign to a val */
-private object HttpClientFactory {
+// todo get rid of this because Play can hand us what we need directly
+ private object HttpClientFactory {
   /** @param url The url you are sending to
     * @param port The TCP port the message will be sent over
     * @param connection The protocal to use: http, or https */
@@ -146,6 +146,7 @@ private object HttpClientFactory {
   }
 }
 
+// todo get rid of this
 private object PostMethodFactory {
   /**
    * Creates a new PostMethod and applies the passed parameters
@@ -169,6 +170,7 @@ private[paypal] trait PaypalBase {
    * @param mode The PaypalMode type that your targeting. Options are PaypalLive or PaypalSandbox
    * @param connection The protocol the invocation is made over. Options are PaypalHTTP or PaypalSSL
    */
+  // todo get rid of this
   protected def client(mode: PaypalMode, connection: PaypalConnection): HttpClient =
     HttpClientFactory(mode.domain, connection.port, connection.protocol)
 }
@@ -177,6 +179,7 @@ private[paypal] trait PaypalBase {
  * A simple abstraction for all HTTP operations. By definition they will return a HTTP error
  * code. We are invariably only concerned with if it was a good one or not.
  */
+// todo probably throw this away too
 private[paypal] trait PaypalUtilities {
   def wasSuccessful(code: Int): Boolean = code match {
     case 200 => true
@@ -185,6 +188,7 @@ private[paypal] trait PaypalUtilities {
 }
 
 /** All HTTP requests to the paypal servers must subclass PaypalRequest. */
+// todo throw this away
 private[paypal] object PaypalRequest extends PaypalUtilities {
   /**
     * @param post Specify the payload of the HTTP request. Must be an instance of PostMethod from HTTP commons
@@ -198,6 +202,7 @@ private[paypal] object PaypalRequest extends PaypalUtilities {
 /**
  * As InputStream is a mutable I/O, we need to use a singleton to access it, process it and return a immutable result.
  * If we did not do this then we get null pointers. */
+// todo throw this away
 private[paypal] object StreamResponseProcessor {
   /** @param p PostMethod Takes the raw HTTP commons PostMethod and processes its stream response */
   def apply(p: PostMethod): List[String] = {
@@ -224,6 +229,7 @@ private[paypal] object StreamResponseProcessor {
 }
 
 /** All paypal service classes need to subclass PaypalResponse. */
+// todo throw this away also?
 private[paypal] trait PaypalResponse extends PaypalUtilities {
   def response: List[String]
   def isVerified: Boolean
@@ -246,6 +252,7 @@ private[paypal] trait PaypalResponse extends PaypalUtilities {
   }
 }
 
+// todo throw this away also?
 private[paypal] object SimplePaypal extends PaypalIPN with PaypalPDT {
   lazy val paypalAuthToken = "123"
 
@@ -280,6 +287,7 @@ object PayPalController extends Controller {
     else None
   }
 
+  /** Ported from LiftActor to Akka 2.1 actor */
   protected class RequestQueue extends Actor {
     lazy val tenSeconds = Duration.create(10, TimeUnit.SECONDS)
 
