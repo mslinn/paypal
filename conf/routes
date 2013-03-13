@@ -1,0 +1,2 @@
+POST    /paypal/ipn          controllers.PayPal.ipn
+POST    /paypal/pdt          controllers.PayPal.processPDT

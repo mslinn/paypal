@@ -1,38 +1,52 @@
-PayPal Lift Module
+PayPal Play Module
 ==================
 
-This module provides integration with PayPal IPN and PDT.
+This is a port in progress of the Liftweb PayPal module.
+Nothing works yet.
+Adapted from the [LiftWeb module](https://github.com/liftmodules/paypal) of the same name, and rewritten using features
+of Scala 2.10, Play 2.1 and Akka 2.10.
+The Liftweb module supports both
+[PDT - Payment Data Transfer](https://www.paypal.com/en_US/i/IntegrationCenter/scr/scr_ppPDTDiagram_513x282.gif) and
+[IPN -Instant Payment Notification](https://www.paypal.com/en_US/i/IntegrationCenter/scr/scr_ppIPNDiagram_555x310.gif).
+Section 13.3 of ["Exploring LiftWeb"](http://exploring.liftweb.net/master/index-13.html#toc-Section-13.3) discusses the PayPal module.
 
----
+This Play module will initially only provide integration with PayPal IPN; someone else can complete the port of PDT.
+I left the code in, but I won't test it because I do not need PDT.
 
-Quick start for users
-=====================
+PDT Example
+-----------
 
-[TODO]
+These examples are completely wrong because the code is still 80% Lift and only 20% Play framework 2.1 right now.
+I'll revisit these docs when I've got something working.
 
+````
+import controllers.paypal._
+​
+object MyPayPalPDT extends PayPalPDT {
+  override def pdtPath = "paypal_complete"
+  def paypalAuthToken = Props.get("paypal.authToken") openOr "cannot find auth token from props file"
+​
+  def pdtResponse: PartialFunction[(PayPalInfo, Req), LiftResponse] = {
+    case (info, req) => println("— in pdtResponse"); DoRedirectResponse("/account_admin/index");
+  }
+}
+​````
 
----
+`pdtResponse` allows you to determine the behavior of you application upon receiving the reponse from PayPal.
 
+IPN Example
+-----------
 
-Useful links
-------------
+````
+import controllers.paypal._
+​
+object MyPayPalIPN extends PayPalIPN {
+  def actions = {
+    case (ClearedPayment, info, req) => // do your processing here
+    case (RefundedPayment, info, req) => // do refund processing
+  }
+}
+````​
 
-**Note:** The module package changed from `net.liftweb.paypal` to `net.liftmodules.paypal` in May 2012.  Please consider this when referencing documentation written before that date.
-
-
-* Found a problem?  Have a suggestion?  Please discuss it on the [Lift mailing list](https://groups.google.com/group/liftweb) before raising a ticket.
-
-* Manning [offer a free PDF](http://www.manning.com/free/excerpt_perrett_a.html) titled _Collecting payment through PayPal_ which you can access in exchange for your name and email address.
-
-* Chapter 5 of [Lift in Action](http://www.manning.com/perrett/).
-
-
----
-
-Notes for module developers
-===========================
-
-* The [Jenkins build](https://liftmodules.ci.cloudbees.com/job/PayPal/) is triggered on a push to master.
-
-
-
+Pattern match on the PaypalTransactionStatus.
+IPN is a ’machine-to-machine’ API which happens in the background without end user interaction.
