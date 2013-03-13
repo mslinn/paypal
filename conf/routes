@@ -1,2 +1,2 @@
-POST    /paypal/ipn          controllers.PayPal.ipn
-POST    /paypal/pdt          controllers.PayPal.processPDT
+POST    /paypal/ipn          controllers.PayPalController.processIPN
+POST    /paypal/pdt          controllers.PayPalController.processPDT

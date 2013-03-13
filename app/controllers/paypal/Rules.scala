@@ -1,5 +1,6 @@
 /*
- * Copyright 2007-2013 WorldWide Conferencing, LLC
+ * Copyright 2013 Micronautics Research Corporation
+ * Portions copyright 2007-2013 WorldWide Conferencing, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +18,21 @@
 package paypal
 
 import java.util.{Currency, Locale}
+import play.api.Configuration
+import java.io.File
 
 object PaypalRules {
+  private lazy val conf = Configuration.load(new File("conf/paypal.conf"))
 
-  def init {
-    ResourceServer.allow {
-      case "paypal" :: _ :: Nil => true
+  val button = conf.getString("button").getOrElse("assets/paypal/en_buynow_68x23.gif")
+
+  val connection: PaypalConnection = PaypalSSL
+
+  val currency: String = Currency.getInstance(Locale.getDefault).getCurrencyCode
+
+  val mode: PaypalMode =
+    conf.getString("mode", Some(Set("live", "sandbox"))).getOrElse("sandbox") match {
+      case "live" => PaypalLive
+      case _ => PaypalSandbox
     }
-  }
-
-  val mode = new FactoryMaker[() => PaypalMode](() => Props.mode match {
-    case Props.RunModes.Production => PaypalLive
-    case _ => PaypalSandbox
-  }){}
-
-  val connection = new FactoryMaker[() => PaypalConnection](() => PaypalSSL){}
-
-  val currency = new FactoryMaker[() => String](() => Currency.getInstance(Locale.getDefault).getCurrencyCode){}
-
-  val button = new FactoryMaker[() => String](() => "/classpath/paypal/en_buynow_68x23.gif"){}
-
 }
