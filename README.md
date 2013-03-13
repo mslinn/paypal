@@ -9,7 +9,9 @@ The Liftweb module supports both PDT (Payment Data Transfer):
 ![PDT - Payment Data Transfer](https://www.paypal.com/en_US/i/IntegrationCenter/scr/scr_ppPDTDiagram_513x282.gif)
 
 and IPN (Instant Payment Notification):
-![IPN -Instant Payment Notification](https://www.paypal.com/en_US/i/IntegrationCenter/scr/scr_ppIPNDiagram_555x310.gif).
+
+![IPN -Instant Payment Notification](https://www.paypal.com/en_US/i/IntegrationCenter/scr/scr_ppIPNDiagram_555x310.gif)
+
 Section 13.3 of ["Exploring LiftWeb"](http://exploring.liftweb.net/master/index-13.html#toc-Section-13.3) discusses the PayPal module.
 
 This Play module will initially only provide integration with PayPal IPN; someone else can complete the port of PDT.
