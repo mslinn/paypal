@@ -1,25 +1,17 @@
 name := "paypal"
 
-liftVersion <<= liftVersion ?? "2.5-SNAPSHOT"
-
-version <<= liftVersion apply { _ + "-1.2-SNAPSHOT" }
-
-organization := "net.liftmodules"
+organization := "com.micronautics"
  
 scalaVersion := "2.10.0"
 
+version := "0.1.0-SNAPSHOT"
+
 crossScalaVersions := Seq("2.10.0", "2.9.2", "2.9.1-1", "2.9.1")
 
-scalacOptions ++= Seq("-unchecked", "-deprecation")
+scalacOptions ++= Seq("-deprecation", "-encoding", "UTF-8", "-feature", "-target:jvm-1.7", "-unchecked",
+    "-Ywarn-adapted-args", "-Ywarn-value-discard", "-Xlint")
 
-resolvers += "CB Central Mirror" at "http://repo.cloudbees.com/content/groups/public"
-
-resolvers += "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
-
-libraryDependencies <++= liftVersion { v =>
-  "net.liftweb" %% "lift-webkit" % v % "compile->default" ::
-  Nil
-}    
+javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars")
 
 libraryDependencies <++= scalaVersion { sv => 
   "commons-httpclient" % "commons-httpclient" % "3.1" ::
@@ -30,47 +22,17 @@ libraryDependencies <++= scalaVersion { sv =>
   Nil
 }
 
+resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-publishTo <<= version { _.endsWith("SNAPSHOT") match {
- 	case true  => Some("snapshots" at "https://oss.sonatype.org/content/repositories/snapshots")
- 	case false => Some("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
-  }
- } 
+publishTo <<= (version) { version: String =>
+   val scalasbt = "http://repo.scala-sbt.org/scalasbt/"
+   val (name, url) = if (version.contains("-SNAPSHOT"))
+                       ("sbt-plugin-snapshots", scalasbt+"sbt-plugin-snapshots")
+                     else
+                       ("sbt-plugin-releases", scalasbt+"sbt-plugin-releases")
+   Some(Resolver.url(name, new URL(url))(Resolver.ivyStylePatterns))
+}
 
-
-// For local deployment:
-
-credentials += Credentials( file("sonatype.credentials") )
-
-// For the build server:
-
-credentials += Credentials( file("/private/liftmodules/sonatype.credentials") )
-
-publishMavenStyle := true
+publishMavenStyle := false
 
 publishArtifact in Test := false
-
-pomIncludeRepository := { _ => false }
-
-pomExtra := (
-	<url>https://github.com/liftmodules/paypal</url>
-	<licenses>
-		<license>
-	      <name>Apache 2.0 License</name>
-	      <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
-	      <distribution>repo</distribution>
-	    </license>
-	 </licenses>
-	 <scm>
-	    <url>git@github.com:liftmodules/paypal.git</url>
-	    <connection>scm:git:git@github.com:liftmodules/paypal.git</connection>
-	 </scm>
-	 <developers>
-	    <developer>
-	      <id>liftmodules</id>
-	      <name>Lift Team</name>
-	      <url>http://www.liftmodules.net</url>
-	 	</developer>
-	 </developers> 
- )
-  
