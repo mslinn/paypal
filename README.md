@@ -23,7 +23,7 @@ PDT Example
 These examples are completely wrong because the code is still 80% Lift and only 20% Play framework 2.1 right now.
 I'll revisit these docs when I've got something working.
 
-````
+```scala
 import controllers.paypal._
 ​
 object MyPayPalPDT extends PayPalPDT {
@@ -34,15 +34,14 @@ object MyPayPalPDT extends PayPalPDT {
     case (info, req) => println("— in pdtResponse"); DoRedirectResponse("/account_admin/index");
   }
 }
-​````
-
+​```
 
 `pdtResponse` allows you to determine the behavior of you application upon receiving the reponse from PayPal.
 
 IPN Example
 -----------
 
-````
+```scala
 import controllers.paypal._
 ​
 object MyPayPalIPN extends PayPalIPN {
@@ -51,7 +50,7 @@ object MyPayPalIPN extends PayPalIPN {
     case (RefundedPayment, info, req) => // do refund processing
   }
 }
-````​
+````
 
 Pattern match on the PaypalTransactionStatus.
 IPN is a ’machine-to-machine’ API which happens in the background without end user interaction.
