@@ -2,6 +2,12 @@ package paypal
 
 import paypal.{PaypalResponse, PaypalRequest, PaypalBase}
 import play.api.mvc.RequestHeader
+import concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
+import concurrent.{Await, Future, ExecutionContext}
+import java.net.URLEncoder
+import play.api.libs.ws.{WS, Response}
+import play.api.Logger
 
 /** Handle the incoming request, dispatch the IPN callback, and handle the subsequent response.
   * This is treated like a case class, but because it is really only an object and a companion class, it can be extended.
@@ -20,9 +26,65 @@ object PaypalIPN {
   }
 }
 
-trait BasePaypalTrait
+trait BasePaypalTrait {
 
-trait PaypalIPN extends BasePaypalTrait
+  // todo replace the clunky HttpClient code from LiftWeb with this
+  def synchronousPost(url: String, dataMap: Map[String, Seq[String]], timeout: Duration=Duration.create(30, TimeUnit.SECONDS)): String = {
+    import play.api.libs.ws.{ WS, Response => WSResponse }
+    import ExecutionContext.Implicits.global
+    val params = dataMap.map { case (k, v) => "%s=%s".format(k, URLEncoder.encode(v.head, "UTF-8")) }.mkString("&")
+    val future: Future[WSResponse] = WS.url(url).withHeaders(("Content-Type", "application/x-www-form-urlencoded")).
+       post(params)
+    try {
+      Await.result(future, timeout)
+      future.value.get.get.body // this line should be redone ... ack!
+    } catch {
+      case ex: Exception =>
+        Logger.error(ex.toString)
+        ex.toString
+    }
+  }
+}
+
+trait PaypalIPN extends BasePaypalTrait {
+  /** @see [[https://www.paypal.com/cgi-bin/webscr?cmd=p/acc/ipn-info-outside]] */
+  // todo decouple this from PaypalTransactions and CustomerAddresses, then replace the LiftWeb IPN code
+  def ipn = Action { implicit request =>
+    request.body.asFormUrlEncoded match {
+      case Some(dataMap) =>
+        Logger.info("\nPaypal request: " + dataMap)
+        synchronousPost(url, dataMap + ("cmd" -> List("_notify-validate"))) match {
+          case "VERIFIED" =>
+            val paymentStatus = dataMap.getOrElse("payment_status", List("")).head
+            if (paymentStatus == "Completed") {
+              val txn = PaypalTransactions.applySeq(dataMap)
+              PaypalTransactions.findByTxnId(txn.txnId) match {
+                case Some(txn) =>
+                  Logger.info("Ignoring duplicate transaction: " + txn.toStringAll)
+
+                case None =>
+                  // Validate that the "receiver_email" is an email address registered in our PayPal account
+                  if (txn.receiverEmail!=receiverEmail) {
+                    Logger.warn("Potential fraud attempt: receiver_email did not match in " + txn.toStringAll)
+                  } else {
+                    val customerAddress = CustomerAddresses.applySeq(dataMap)
+                    new TransactionProcessor(txn, customerAddress)(request).processTransaction
+                  }
+              }
+            } else { // paymentStatus might be "Pending" or "Failed"
+              Logger.warn("Verified but payment_status is " + paymentStatus)
+            }
+
+          case response => // most likely response is "INVALID"
+            Logger.warn("Could not verify Paypal transaction via POST to %s; verification response: '%s'".format(url, response))
+        }
+
+      case None =>
+    }
+    Ok
+  }
+
+}
 
 /**
  * In response to the IPN postback from PayPal, its necessary to then call PayPal and pass back

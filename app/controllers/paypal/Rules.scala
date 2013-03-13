@@ -24,15 +24,21 @@ import java.io.File
 object PaypalRules {
   private lazy val conf = Configuration.load(new File("conf/paypal.conf"))
 
-  val button = conf.getString("button").getOrElse("assets/paypal/en_buynow_68x23.gif")
+  lazy val button = conf.getString("button").getOrElse("assets/paypal/en_buynow_68x23.gif")
 
-  val connection: PaypalConnection = PaypalSSL
+  lazy val connection: PaypalConnection = PaypalSSL
 
-  val currency: String = Currency.getInstance(Locale.getDefault).getCurrencyCode
+  lazy val currency: String = Currency.getInstance(Locale.getDefault).getCurrencyCode
 
-  val mode: PaypalMode =
+  lazy val mode: PaypalMode =
     conf.getString("mode", Some(Set("live", "sandbox"))).getOrElse("sandbox") match {
       case "live" => PaypalLive
       case _ => PaypalSandbox
     }
+
+  lazy val url =
+    if (mode==PaypalLive)
+      "https://www.paypal.com/cgi-bin/webscr?cmd=_notify-validate&"
+    else
+      "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_notify-validate&"
 }
