@@ -34,7 +34,7 @@ object MyPayPalPDT extends PayPalPDT {
     case (info, req) => println("— in pdtResponse"); DoRedirectResponse("/account_admin/index");
   }
 }
-​```
+```
 
 `pdtResponse` allows you to determine the behavior of you application upon receiving the reponse from PayPal.
 
@@ -50,7 +50,7 @@ object MyPayPalIPN extends PayPalIPN {
     case (RefundedPayment, info, req) => // do refund processing
   }
 }
-````
+```
 
 Pattern match on the PaypalTransactionStatus.
 IPN is a ’machine-to-machine’ API which happens in the background without end user interaction.
