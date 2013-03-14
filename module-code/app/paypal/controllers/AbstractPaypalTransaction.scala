@@ -19,22 +19,22 @@ package paypal.controllers
 import play.api.mvc.RequestHeader
 import play.api.Logger
 
-//object PaypalTransaction {
-//  def findByTxnId(id: String): PaypalTransaction
+//object AbstractPaypalTransaction {
+//  def findByTxnId(id: String): AbstractPaypalTransaction
 //}
 
 /** Extend this class for a concrete implementation that can be persisted */
-abstract class PaypalTransaction(dataMap: Map[String, Seq[String]]) {
-  val txnId: String
-  val receiverEmail: String
+abstract class AbstractPaypalTransaction(dataMap: Map[String, Seq[String]]) {
+  private[controllers] val formNVP = new FormNVP(dataMap)
+  val txnId: String = formNVP.maybeGetString("item_name").getOrElse("")
+  val receiverEmail: String = formNVP.maybeGetString("receiver_email").getOrElse("")
 }
 
-abstract class TransactionProcessor(txn: String, customerAddress: CustomerAddress)(implicit request: RequestHeader) {
+abstract class AbstractTransactionProcessor(txn: String, customerAddress: AbstractCustomerAddress)(implicit request: RequestHeader) {
   def processTransaction: Unit
 
-  def handleDuplicateTransaction(txn: PaypalTransaction): Unit =
+  def handleDuplicateTransaction(txn: AbstractPaypalTransaction): Unit =
     Logger.info("Ignoring duplicate transaction: " + txn.toString)
 }
 
-abstract class CustomerAddress(dataMap: Map[String, Seq[String]]) {
-}
+abstract class AbstractCustomerAddress(dataMap: Map[String, Seq[String]])

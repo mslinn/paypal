@@ -74,7 +74,7 @@ object Factories {
 import Factories._
 val ipn = new PaypalIPN[MyPaypalTransaction, MyCustomerAddress, MyTransactionProcessor]
 </code> */
-class PaypalIPN[PPT <: PaypalTransaction, CA <: CustomerAddress, TP <: TransactionProcessor]
+class PaypalIPN[PPT <: AbstractPaypalTransaction, CA <: AbstractCustomerAddress, TP <: AbstractTransactionProcessor]
         (implicit pptFactory: (Map[String, Seq[String]]) => PPT,
                   caFactory: (Map[String, Seq[String]]) => CA,
                   tpFactory: (PPT, CA) => TP) extends BasePaypalTrait {
