@@ -1,12 +1,12 @@
 package paypal
 
 import paypal.{PaypalResponse, PaypalRequest, PaypalBase}
-import play.api.mvc.RequestHeader
+import play.api.mvc.{Action, RequestHeader}
+import play.api.mvc.Results.Ok
 import concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 import concurrent.{Await, Future, ExecutionContext}
 import java.net.URLEncoder
-import play.api.libs.ws.{WS, Response}
 import play.api.Logger
 
 /** Handle the incoming request, dispatch the IPN callback, and handle the subsequent response.
@@ -46,29 +46,29 @@ trait BasePaypalTrait {
   }
 }
 
-trait PaypalIPN extends BasePaypalTrait {
+trait PaypalIPN[PPT <: PaypalTransaction, CA <: CustomerAddress, TP <: TransactionProcessor] extends BasePaypalTrait {
   /** @see [[https://www.paypal.com/cgi-bin/webscr?cmd=p/acc/ipn-info-outside]] */
   // todo decouple this from PaypalTransactions and CustomerAddresses, then replace the LiftWeb IPN code
   def ipn = Action { implicit request =>
     request.body.asFormUrlEncoded match {
       case Some(dataMap) =>
         Logger.info("\nPaypal request: " + dataMap)
-        synchronousPost(url, dataMap + ("cmd" -> List("_notify-validate"))) match {
+        synchronousPost(Rules.url, dataMap + ("cmd" -> List("_notify-validate"))) match {
           case "VERIFIED" =>
             val paymentStatus = dataMap.getOrElse("payment_status", List("")).head
             if (paymentStatus == "Completed") {
-              val txn = PaypalTransactions.applySeq(dataMap)
-              PaypalTransactions.findByTxnId(txn.txnId) match {
+              val txn = PPT.createFrom(dataMap)
+              PPT.findByTxnId(txn.txnId) match {
                 case Some(txn) =>
-                  Logger.info("Ignoring duplicate transaction: " + txn.toStringAll)
+                  Logger.info("Ignoring duplicate transaction: " + txn.toString)
 
                 case None =>
                   // Validate that the "receiver_email" is an email address registered in our PayPal account
                   if (txn.receiverEmail!=receiverEmail) {
-                    Logger.warn("Potential fraud attempt: receiver_email did not match in " + txn.toStringAll)
+                    Logger.warn("Potential fraud attempt: receiver_email did not match in " + txn.toString)
                   } else {
-                    val customerAddress = CustomerAddresses.applySeq(dataMap)
-                    new TransactionProcessor(txn, customerAddress)(request).processTransaction
+                    val customerAddress = CA.createFrom(dataMap)
+                    TP.createFrom(txn, customerAddress).processTransaction
                   }
               }
             } else { // paymentStatus might be "Pending" or "Failed"
