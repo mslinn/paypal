@@ -27,24 +27,28 @@ class PaypalTransactionFinder extends AbstractPaypalTransactionFinder {
 
 class CustomerAddress(dataMap: NameValuePairs) extends AbstractCustomerAddress(dataMap)
 
-class TransactionProcessor(txn: String, customerAddress: CustomerAddress)(implicit request: RequestHeader)
-  extends AbstractTransactionProcessor(txn, customerAddress)(request) {
+class TransactionProcessor(txn: PaypalTransaction, customerAddress: CustomerAddress)
+  extends AbstractTransactionProcessor(txn, customerAddress) {
   def processTransaction: Unit = { println("Bogus processTransaction") }
 }
 
-object Factories {
-  implicit def pptFactory[PaypalTransaction](implicit dataMap: NameValuePairs) = new PaypalTransaction(dataMap)
-  implicit def pptFinder[PaypalTransaction] = new PaypalTransaction(Map.empty) // todo make this useful
-  implicit def caFactory[CustomerAddress](implicit dataMap: NameValuePairs) = new CustomerAddress(dataMap)
-  implicit def tpFactory[TransactionProcessor](txn: String, customerAddress: CustomerAddress)(implicit request: RequestHeader) =
-    new TransactionProcessor(txn, customerAddress)(request)
+object ApplicationServicesSpec {
+  def pptFinder(): PaypalTransactionFinder = new PaypalTransactionFinder
+  implicit def pptFactory(dataMap: NameValuePairs): PaypalTransaction = new PaypalTransaction(dataMap)
+  implicit def caFactory(dataMap: NameValuePairs): CustomerAddress = new CustomerAddress(dataMap)
+  implicit def tpFactory(txn: PaypalTransaction, customerAddress: CustomerAddress): TransactionProcessor =
+    new TransactionProcessor(txn, customerAddress)
+
+  ((null:NameValuePairs):PaypalTransaction)
 }
 
 
 class ApplicationServicesSpec extends Specification {
+  import ApplicationServicesSpec._
+
   implicit val dataMap: NameValuePairs = Map.empty
-  import Factories._
-  val ipn = new PaypalIPN[PaypalTransaction, PaypalTransactionFinder, CustomerAddress, TransactionProcessor]()
+
+  val ipn = new PaypalIPN[PaypalTransactionFinder, PaypalTransaction, CustomerAddress, TransactionProcessor](pptFinder)(pptFactory, caFactory, tpFactory)
 
    "IPN responses" should {
      "have a boxed transaction status" in {

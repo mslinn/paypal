@@ -30,10 +30,10 @@ abstract class AbstractPaypalTransaction(dataMap: NameValuePairs) {
   val receiverEmail: String = formNVP.maybeGetString("receiver_email").getOrElse("")
 }
 
-abstract class AbstractTransactionProcessor(txn: String, customerAddress: AbstractCustomerAddress)(implicit request: RequestHeader) {
+abstract class AbstractTransactionProcessor(txn: AbstractPaypalTransaction, customerAddress: AbstractCustomerAddress) {
   def processTransaction: Unit
 
-  def handleDuplicateTransaction(txn: AbstractPaypalTransaction): Unit =
+  def handleDuplicateTransaction: Unit =
     Logger.info("Ignoring duplicate transaction: " + txn.toString)
 }
 

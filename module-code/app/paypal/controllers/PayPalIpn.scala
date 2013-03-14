@@ -45,7 +45,6 @@ object PaypalIPN {
 
 trait BasePaypalTrait {
 
-  // todo replace the clunky HttpClient code from LiftWeb with this
   def synchronousPost(url: String, dataMap: NameValuePairs, timeout: Duration=Duration.create(30, TimeUnit.SECONDS)): String = {
     import play.api.libs.ws.{ WS, Response => WSResponse }
     import ExecutionContext.Implicits.global
@@ -74,11 +73,11 @@ object Factories {
 import Factories._
 val ipn = new PaypalIPN[MyPaypalTransaction, MyCustomerAddress, MyTransactionProcessor]
 </code> */
-class PaypalIPN[PPT<:AbstractPaypalTransaction, PPTS<:AbstractPaypalTransactionFinder, CA<:AbstractCustomerAddress, TP<:AbstractTransactionProcessor]
+class PaypalIPN[TF<:AbstractPaypalTransactionFinder, PPT<:AbstractPaypalTransaction, CA<:AbstractCustomerAddress, TP<:AbstractTransactionProcessor]
+        (pptFinder: () => TF)
         (implicit pptFactory: (NameValuePairs) => PPT,
-                  pptFinder: () => PPTS,
-                  caFactory: (NameValuePairs) => CA,
-                  tpFactory: (PPT, CA) => TP) extends BasePaypalTrait {
+                 caFactory: (NameValuePairs) => CA,
+                 tpFactory: (PPT, CA) => TP) extends BasePaypalTrait {
 
   /** @see [[https://www.paypal.com/cgi-bin/webscr?cmd=p/acc/ipn-info-outside]] */
   def ipn = Action { implicit request =>
