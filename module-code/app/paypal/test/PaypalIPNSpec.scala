@@ -48,7 +48,7 @@ class ApplicationServicesSpec extends Specification {
 
   implicit val dataMap: NameValuePairs = Map.empty
 
-  val ipn = new PaypalIPN[PaypalTransactionFinder, PaypalTransaction, CustomerAddress, TransactionProcessor](pptFinder)
+  val ipn = new PaypalIPN[PaypalTransactionFinder, PaypalTransaction, CustomerAddress, TransactionProcessor]
 
    "IPN responses" should {
      "have a boxed transaction status" in {

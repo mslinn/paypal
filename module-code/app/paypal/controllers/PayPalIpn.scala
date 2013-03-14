@@ -74,10 +74,10 @@ import Factories._
 val ipn = new PaypalIPN[MyPaypalTransaction, MyCustomerAddress, MyTransactionProcessor]
 </code> */
 class PaypalIPN[TF<:AbstractPaypalTransactionFinder, PPT<:AbstractPaypalTransaction, CA<:AbstractCustomerAddress, TP<:AbstractTransactionProcessor]
-        (pptFinder: () => TF)
-        (implicit pptFactory: (NameValuePairs) => PPT,
-                 caFactory: (NameValuePairs) => CA,
-                 tpFactory: (PPT, CA) => TP) extends BasePaypalTrait {
+        (implicit pptFinder: () => TF,
+                  pptFactory: (NameValuePairs) => PPT,
+                  caFactory: (NameValuePairs) => CA,
+                  tpFactory: (PPT, CA) => TP) extends BasePaypalTrait {
 
   /** @see [[https://www.paypal.com/cgi-bin/webscr?cmd=p/acc/ipn-info-outside]] */
   def ipn = Action { implicit request =>
