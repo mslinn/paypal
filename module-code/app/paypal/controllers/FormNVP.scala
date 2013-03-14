@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package paypal
+package paypal.controllers
 
 class FormNVP(form: Map[String, Seq[String]]) {
 

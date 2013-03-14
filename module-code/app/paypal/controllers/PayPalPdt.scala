@@ -1,4 +1,4 @@
-package paypal
+package paypal.controllers
 
 import paypal._
 import play.api._

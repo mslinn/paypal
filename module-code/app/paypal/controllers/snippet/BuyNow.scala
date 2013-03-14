@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package paypal.snippet
+package paypal.controllers.snippet
 
 import scala.xml.NodeSeq
 

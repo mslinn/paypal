@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package paypal
+package paypal.controllers
 
 import akka.actor.{Props, ActorSystem, Actor}
 import collection.mutable.ListBuffer
@@ -165,7 +165,7 @@ object PayPalController extends Controller {
       case IPNRequest(response, count, when) if when <= System.currentTimeMillis =>
         try {
           val resp = PaypalIPN(response, PaypalRules.mode, PaypalRules.connection)
-          buildInfo(resp, response)).map { info: PayPalInfo =>
+          buildInfo(resp, response).map { info: PayPalInfo =>
             actions((info.paymentStatus, info, response))
           }
         } catch {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package paypal
+package paypal.controllers
 
 // import org.specs.Specification
 // import org.specs.mock._

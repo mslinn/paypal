@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package object paypal {
+package paypal
+
+package object controllers {
   /** Sealed abstract type PaypalMode so we can cast to the super class in our method declarations.
    * Cannot be subclassed outside of this source file. */
   sealed trait PaypalMode {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package paypal
+package paypal.controllers
 
 import java.util.{Currency, Locale}
 import play.api.Configuration
