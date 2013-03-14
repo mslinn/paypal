@@ -47,6 +47,17 @@ trait BasePaypalTrait {
   }
 }
 
+/** Use like this:
+  * <code>
+object Factories {
+  implicit def pptFactory[MyPaypalTransaction]() = new MyPaypalTransaction()
+  implicit def caFactory[MyCustomerAddress]() = new MyCustomerAddress()
+  implicit def tpFactory[MyTransactionProcessor]() = new MyTransactionProcessor()
+}
+
+import Factories._
+val ipn = new PaypalIPN[MyPaypalTransaction, MyCustomerAddress, MyTransactionProcessor]
+</code> */
 class PaypalIPN[PPT <: PaypalTransaction, CA <: CustomerAddress, TP <: TransactionProcessor]
         (implicit pptFactory: (Map[String, Seq[String]]) => PPT,
                   caFactory: (Map[String, Seq[String]]) => CA,
