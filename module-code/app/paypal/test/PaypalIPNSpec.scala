@@ -33,13 +33,13 @@ class TransactionProcessor(txn: PaypalTransaction, customerAddress: CustomerAddr
 }
 
 object ApplicationServicesSpec {
-  def pptFinder(): PaypalTransactionFinder = new PaypalTransactionFinder
+  implicit def pptFinder(): PaypalTransactionFinder = new PaypalTransactionFinder
   implicit def pptFactory(dataMap: NameValuePairs): PaypalTransaction = new PaypalTransaction(dataMap)
   implicit def caFactory(dataMap: NameValuePairs): CustomerAddress = new CustomerAddress(dataMap)
   implicit def tpFactory(txn: PaypalTransaction, customerAddress: CustomerAddress): TransactionProcessor =
     new TransactionProcessor(txn, customerAddress)
 
-  ((null:NameValuePairs):PaypalTransaction)
+  //((null:NameValuePairs):PaypalTransaction)
 }
 
 
@@ -48,7 +48,7 @@ class ApplicationServicesSpec extends Specification {
 
   implicit val dataMap: NameValuePairs = Map.empty
 
-  val ipn = new PaypalIPN[PaypalTransactionFinder, PaypalTransaction, CustomerAddress, TransactionProcessor](pptFinder)(pptFactory, caFactory, tpFactory)
+  val ipn = new PaypalIPN[PaypalTransactionFinder, PaypalTransaction, CustomerAddress, TransactionProcessor](pptFinder)
 
    "IPN responses" should {
      "have a boxed transaction status" in {

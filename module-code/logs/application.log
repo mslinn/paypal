@@ -1419,3 +1419,6 @@ sbt.PlayExceptions$CompilationException: Compilation error[not found: value amou
 2013-03-14 14:42:16,589 - [INFO] - from play in New I/O  worker #8 
 Application started (Dev)
 
+2013-03-14 14:44:58,443 - [INFO] - from play in New I/O  worker #9 
+Application started (Dev)
+
