@@ -7,9 +7,9 @@ object ApplicationBuild extends Build {
   val appName         = "paypal"
   val appVersion      = "0.1.0-SNAPSHOT"
 
-  crossScalaVersions := Seq("2.10.0")
+  crossScalaVersions := Seq("2.10.1")
 
-  scalaVersion := "2.10.0"
+  scalaVersion := "2.10.1"
 
     val appDependencies = Seq(
       "com.typesafe"       %  "config"             % "1.0.0",

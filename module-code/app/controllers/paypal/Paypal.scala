@@ -28,8 +28,6 @@ import java.util.concurrent.TimeUnit
 import play.api.Logger
 import play.api.mvc.{Action, RequestHeader, Controller}
 
-// todo This file still needs a lot of shredding done to it
-
 /** A parameter set that takes request parameters and assigns them to properties of this class
  * @param form The parameters from the incoming request */
 private[paypal] class PayPalInfo(form: Map[String, Seq[String]]) {
@@ -131,137 +129,6 @@ private[paypal] class PayPalInfo(form: Map[String, Seq[String]]) {
   }
 }
 
-/** As the HTTP Commons HttpClient class is by definition very mutable, we provide this factory method to produce an
-  * instance that we can assign to a val */
-// todo get rid of this because Play can hand us what we need directly
- private object HttpClientFactory {
-  /** @param url The url you are sending to
-    * @param port The TCP port the message will be sent over
-    * @param connection The protocal to use: http, or https */
-  def apply(url: String, port: Int, connection: String): HttpClient = {
-    val c: HttpClient = new HttpClient()
-    c.getParams().setParameter("http.protocol.content-charset", "UTF-8")
-    c.getHostConfiguration().setHost(url, port, connection)
-    c
-  }
-}
-
-// todo get rid of this
-private object PostMethodFactory {
-  /**
-   * Creates a new PostMethod and applies the passed parameters
-   * @param url The string representation of the endpoint (e.g. www.paypal.com)
-   * paypal parameters A Seq[(String,String)] of parameters that will become the payload of the request
-   */
-  def apply(url: String, parameters: Seq[(String, String)]): PostMethod = {
-    val p: PostMethod = new PostMethod(url)
-    p.setRequestBody(parameters)
-    p
-  }
-
-  implicit def tonvp(in: Seq[(String, String)]): Array[NameValuePair] =
-    in.map(p => new NameValuePair(p._1, p._2)).toArray
-}
-
-/** Common functionality for paypal PDT and IPN */
-private[paypal] trait PaypalBase {
-  /**
-   * Create a new HTTP client
-   * @param mode The PaypalMode type that your targeting. Options are PaypalLive or PaypalSandbox
-   * @param connection The protocol the invocation is made over. Options are PaypalHTTP or PaypalSSL
-   */
-  // todo get rid of this
-  protected def client(mode: PaypalMode, connection: PaypalConnection): HttpClient =
-    HttpClientFactory(mode.domain, connection.port, connection.protocol)
-}
-
-/**
- * A simple abstraction for all HTTP operations. By definition they will return a HTTP error
- * code. We are invariably only concerned with if it was a good one or not.
- */
-// todo probably throw this away too
-private[paypal] trait PaypalUtilities {
-  def wasSuccessful(code: Int): Boolean = code match {
-    case 200 => true
-    case _ => false
-  }
-}
-
-/** All HTTP requests to the paypal servers must subclass PaypalRequest. */
-// todo throw this away
-private[paypal] object PaypalRequest extends PaypalUtilities {
-  /**
-    * @param post Specify the payload of the HTTP request. Must be an instance of PostMethod from HTTP commons
-    * @param client Must be a HTTP client; the simplest way to create this is by using HttpClientFactory */
-  def apply(client: HttpClient, post: PostMethod): List[String] = wasSuccessful(tryo(client.executeMethod(post)).openOr(500)) match {
-    case true => StreamResponseProcessor(post)
-    case _ => List("Failure")
-  }
-}
-
-/**
- * As InputStream is a mutable I/O, we need to use a singleton to access it, process it and return a immutable result.
- * If we did not do this then we get null pointers. */
-// todo throw this away
-private[paypal] object StreamResponseProcessor {
-  /** @param p PostMethod Takes the raw HTTP commons PostMethod and processes its stream response */
-  def apply(p: PostMethod): List[String] = {
-    val stream: InputStream = p.getResponseBodyAsStream()
-    val reader: BufferedReader = new BufferedReader(new InputStreamReader(stream))
-    val ret: ListBuffer[String] = new ListBuffer
-
-    try {
-      def doRead {
-        reader.readLine() match {
-          case null => ()
-          case line =>
-            ret += line
-            doRead
-        }
-      }
-
-      doRead
-      ret.toList
-    } catch {
-      case _ : Throwable => Nil
-    }
-  }
-}
-
-/** All paypal service classes need to subclass PaypalResponse. */
-// todo throw this away also?
-private[paypal] trait PaypalResponse extends PaypalUtilities {
-  def response: List[String]
-  def isVerified: Boolean
-
-  private lazy val info: Map[String, String] =
-    Map((for (v <- response; s <- split(v)) yield s) :_*)
-
-  def param(name: String): Option[String] = info.get(name)
-
-  lazy val paypalInfo: Option[PayPalInfo] =
-    if (isVerified) Some(new PayPalInfo(this)) else None
-
-  def rawHead: Option[String] = response.headOption
-
-  private def split(in: String): Option[(String, String)] = {
-    val pos = in.indexOf("=")
-    if (pos < 0) None
-      else Some((URLDecoder.decode(in.substring(0, pos), "UTF-8"),
-                 URLDecoder.decode(in.substring(pos + 1), "UTF-8")))
-  }
-}
-
-// todo throw this away also?
-private[paypal] object SimplePaypal extends PaypalIPN with PaypalPDT {
-  lazy val paypalAuthToken = "123"
-
-  def actions = {
-    case (status, info, resp) =>
-      Logger.info("Got a verified PayPal IPN: "+status)
-  }
-}
-
 object PayPalController extends Controller {
   implicit lazy val system = ActorSystem.create()
   lazy val requestQueue = system.actorOf(Props[RequestQueue])
@@ -269,22 +136,17 @@ object PayPalController extends Controller {
 
   def paypalAuthToken: String
 
-
   def processIPN = Action { implicit request =>
-    request.params // force the lazy value to be evaluated
     requestQueue ! IPNRequest(request, 0, System.currentTimeMillis)
     Ok
   }
-
-  def actions: PartialFunction[(Option[PaypalTransactionStatus.Value], PayPalInfo, RequestHeader), Unit]
 
   protected case class IPNRequest(request: RequestHeader, cnt: Int, when: Long)
 
   protected case object PingMe
 
   protected def buildInfo(resp: PaypalResponse, request: RequestHeader): Option[PayPalInfo] = {
-    if (resp.isVerified) Some(new PayPalInfo(request))
-    else None
+    if (resp.isVerified) Some(new PayPalInfo(request)) else None
   }
 
   /** Ported from LiftActor to Akka 2.1 actor */
@@ -295,17 +157,16 @@ object PayPalController extends Controller {
     lazy val MaxRetry = 6
 
     def receive = {
-      case PingMe => context.system.scheduler.scheduleOnce(tenSeconds, self, PingMe)
+      case PingMe =>
+        context.system.scheduler.scheduleOnce(tenSeconds, self, PingMe)
 
-      case IPNRequest(response, count, _) if count > MaxRetry => // discard the transaction
+      case IPNRequest(_, count, _) if count > MaxRetry => // discard the transaction
 
       case IPNRequest(response, count, when) if when <= System.currentTimeMillis =>
         try {
           val resp = PaypalIPN(response, PaypalRules.mode, PaypalRules.connection)
-
-          for (info <-  buildInfo(resp, response)) yield {
+          buildInfo(resp, response)).map { info: PayPalInfo =>
             actions((info.paymentStatus, info, response))
-            true
           }
         } catch {
           case _ => // retry

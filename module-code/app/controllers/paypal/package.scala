@@ -19,7 +19,7 @@ package object paypal {
   /** Sealed abstract type PaypalMode so we can cast to the super class in our method declarations.
    * Cannot be subclassed outside of this source file. */
   sealed trait PaypalMode {
-    def domain: String
+    val domain: String
 
     override def toString = s"PaypalMode: $domain"
   }
@@ -34,7 +34,7 @@ package object paypal {
 
   /** Represents the type of connection that can be made to PayPal, irrespective of the mode of connection */
   sealed trait PaypalConnection {
-    def protocol: String
+    val protocol: String
     val port: Int = 80
 
     override def toString = s"PaypalConnection: ${protocol}:${port}"
