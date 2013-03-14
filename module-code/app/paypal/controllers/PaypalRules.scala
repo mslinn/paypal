@@ -36,6 +36,8 @@ object PaypalRules {
       case _ => PaypalSandbox
     }
 
+  lazy val receiverEmail = conf.getString("receiverEmail").getOrElse("nobody@nowhere.com")
+
   lazy val url =
     if (mode==PaypalLive)
       "https://www.paypal.com/cgi-bin/webscr?cmd=_notify-validate&"

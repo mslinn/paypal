@@ -21,7 +21,7 @@ import paypal._
 import play.api._
 import play.api.mvc._
 
-object PaypalDataTransfer extends PaypalBase {
+object PaypalDataTransfer /*extends PaypalBase */{
 
   /** @return post body to send, which differs between PDT and IPN */
   private def payloadArray(authToken: String, transactionToken: String) =
@@ -37,33 +37,17 @@ object PaypalDataTransfer extends PaypalBase {
    * @param connection The protocol the invocation is made over. Options are PaypalHTTP or PaypalSSL
    * @return PaypalDataTransferResponse
    */
-  def apply(authToken: String, transactionToken: String, mode: PaypalMode, connection: PaypalConnection): PaypalResponse =
-    PaypalDataTransferResponse(
-      PaypalRequest(client(mode, connection),
-                    PostMethodFactory("/cgi-bin/webscr", payloadArray(authToken, transactionToken))))
-}
-
-/**
- * Wrapper instance for handling the response from a PayPal data transfer.
- * @param response The processed response List[String]. The response
- * input should be created with StreamResponseProcessor
- */
-case class PaypalDataTransferResponse(response: List[String]) extends PaypalResponse {
-  def isVerified = paymentSuccessful
-
-  /** Utility method for letting you know if the payment data is returning a successful message */
-  def paymentSuccessful: Boolean = rawHead match {
-    case Some("SUCCESS") => true
-    case _ => false
-  }
+  def apply(authToken: String, transactionToken: String, mode: PaypalMode, connection: PaypalConnection): Unit = {} //PaypalResponse =
+//    PaypalDataTransferResponse(
+//      PaypalRequest(client(mode, connection),
+//                    PostMethodFactory("/cgi-bin/webscr", payloadArray(authToken, transactionToken))))
 }
 
 trait PaypalPDT extends Controller with BasePaypalTrait {
 
-  def pdtResponse = {
-    case (info, resp) =>
-      Logger.info("Got a verified PayPal PDT: "+resp)
-      Redirect("/")
+  def pdtResponse = Action { implicit request =>
+    Logger.info(s"Got a verified PayPal PDT: ${request.body.asText}")
+    Redirect("/")
   }
 
   def processPDT = Action { implicit request =>

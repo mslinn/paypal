@@ -16,49 +16,43 @@
 
 package paypal.controllers
 
-import org.specs.Specification
+import org.specs2.mutable._
 import play.api.mvc.RequestHeader
 
-// import org.specs.mock._
-// import org.specs.mock.JMocker._
-import org.specs.runner.JUnit4
+class PaypalTransaction(dataMap: NameValuePairs) extends AbstractPaypalTransaction(dataMap)
 
-class PaypalTransaction(dataMap: Map[String, Seq[String]]) extends AbstractPaypalTransaction(dataMap)
+class PaypalTransactionFinder extends AbstractPaypalTransactionFinder {
+  def findByTxnId(txnId: String): Option[PaypalTransaction] = Some(new PaypalTransaction(Map.empty)) // todo make this useful
+}
 
-class CustomerAddress(dataMap: Map[String, Seq[String]]) extends AbstractCustomerAddress(dataMap)
+class CustomerAddress(dataMap: NameValuePairs) extends AbstractCustomerAddress(dataMap)
 
 class TransactionProcessor(txn: String, customerAddress: CustomerAddress)(implicit request: RequestHeader)
-  extends AbstractTransactionProcessor(txn, customerAddress)(request)
-{
+  extends AbstractTransactionProcessor(txn, customerAddress)(request) {
   def processTransaction: Unit = { println("Bogus processTransaction") }
 }
 
 object Factories {
-  implicit def pptFactory[PaypalTransaction](implicit dataMap: Map[String, Seq[String]]) = new PaypalTransaction(dataMap)
-  implicit def caFactory[CustomerAddress](implicit dataMap: Map[String, Seq[String]]) = new CustomerAddress(dataMap)
+  implicit def pptFactory[PaypalTransaction](implicit dataMap: NameValuePairs) = new PaypalTransaction(dataMap)
+  implicit def pptFinder[PaypalTransaction] = new PaypalTransaction(Map.empty) // todo make this useful
+  implicit def caFactory[CustomerAddress](implicit dataMap: NameValuePairs) = new CustomerAddress(dataMap)
   implicit def tpFactory[TransactionProcessor](txn: String, customerAddress: CustomerAddress)(implicit request: RequestHeader) =
     new TransactionProcessor(txn, customerAddress)(request)
 }
 
-//class PaypalIPNSpecTest extends JUnit4(PaypalIPNSpec)
 
-object ApplicationServicesSpec
-   extends Specification("Paypal IPN")
-//   with JMocker
-//   with ClassMocker
-  {
-  implicit val dataMap: Map[String, Seq[String]] = Map.empty
+class ApplicationServicesSpec extends Specification {
+  implicit val dataMap: NameValuePairs = Map.empty
   import Factories._
-  val ipn = new PaypalIPN[PaypalTransaction, CustomerAddress, TransactionProcessor]
-//
-//   "IPN responses" should {
-//     "have a boxed transaction status" in {
-//
-//     }
-//   }
-//
+  val ipn = new PaypalIPN[PaypalTransaction, PaypalTransactionFinder, CustomerAddress, TransactionProcessor]()
+
+   "IPN responses" should {
+     "have a boxed transaction status" in {
+       true // todo write this
+     }
+   }
 }
-//
+
 // object SimplePaypal extends PaypalIPN {
 //   def actions = {
 //     case (status, info, resp) =>

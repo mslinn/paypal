@@ -18,6 +18,9 @@
 package paypal
 
 package object controllers {
+  type NameValuePairs = Map[String, Seq[String]]
+
+
   /** Sealed abstract type PaypalMode so we can cast to the super class in our method declarations.
    * Cannot be subclassed outside of this source file. */
   sealed trait PaypalMode {

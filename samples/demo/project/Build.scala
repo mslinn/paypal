@@ -6,7 +6,7 @@ object ApplicationBuild extends Build {
     val appName         = "ssdemo-scala"
     val appVersion      = "1.0-SNAPSHOT"
 
-    scalaVersion := "2.10.0"
+    scalaVersion := "2.10.1"
 
     val appDependencies = Seq(
     	"com.micronautics" % "securesocial" % "2.1.0" withSources()

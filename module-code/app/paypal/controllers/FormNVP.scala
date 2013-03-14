@@ -16,7 +16,7 @@
 
 package paypal.controllers
 
-class FormNVP(form: Map[String, Seq[String]]) {
+class FormNVP(form: NameValuePairs) {
 
   def get(name: String): Seq[String] = {
     val strArray: Seq[String] = (for {

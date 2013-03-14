@@ -18,19 +18,13 @@
 package paypal.controllers
 
 import akka.actor.{Props, ActorSystem, Actor}
-import collection.mutable.ListBuffer
 import concurrent.duration.Duration
-import org.apache.commons.httpclient.{HttpClient, NameValuePair}
-import org.apache.commons.httpclient.methods._
-import java.io._
-import java.net.URLDecoder
 import java.util.concurrent.TimeUnit
-import play.api.Logger
 import play.api.mvc.{Action, RequestHeader, Controller}
 
 /** A parameter set that takes request parameters and assigns them to properties of this class
  * @param form The parameters from the incoming request */
-private[paypal] class PayPalInfo(form: Map[String, Seq[String]]) {
+private[paypal] class PayPalInfo(form: NameValuePairs) {
   val formNVP = new FormNVP(form)
   val itemName           = formNVP.maybeGetString("item_name")
   val business           = formNVP.maybeGetString("business")
@@ -129,12 +123,14 @@ private[paypal] class PayPalInfo(form: Map[String, Seq[String]]) {
   }
 }
 
+class PaypalResponse { // todo just so this compiles
+  val isVerified = true
+}
+
 object PayPalController extends Controller {
   implicit lazy val system = ActorSystem.create()
   lazy val requestQueue = system.actorOf(Props[RequestQueue])
   requestQueue ! PingMe
-
-  def paypalAuthToken: String
 
   def processIPN = Action { implicit request =>
     requestQueue ! IPNRequest(request, 0, System.currentTimeMillis)
@@ -145,12 +141,14 @@ object PayPalController extends Controller {
 
   protected case object PingMe
 
-  protected def buildInfo(resp: PaypalResponse, request: RequestHeader): Option[PayPalInfo] = {
-    if (resp.isVerified) Some(new PayPalInfo(request)) else None
+  protected def buildInfo(resp: PaypalResponse, dataMap: NameValuePairs): Option[PayPalInfo] = {
+    if (resp.isVerified) Some(new PayPalInfo(dataMap)) else None
   }
 
   /** Ported from LiftActor to Akka 2.1 actor */
   protected class RequestQueue extends Actor {
+    import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
     lazy val tenSeconds = Duration.create(10, TimeUnit.SECONDS)
 
     /** Number of times to attempt to verify the request */
@@ -165,11 +163,11 @@ object PayPalController extends Controller {
       case IPNRequest(response, count, when) if when <= System.currentTimeMillis =>
         try {
           val resp = PaypalIPN(response, PaypalRules.mode, PaypalRules.connection)
-          buildInfo(resp, response).map { info: PayPalInfo =>
-            actions((info.paymentStatus, info, response))
-          }
+//          buildInfo(resp, response).map { info: PayPalInfo =>
+            //actions((info.paymentStatus, info, response))
+//          }
         } catch {
-          case _ => // retry
+          case _: Throwable => // retry
               self ! IPNRequest(response, count + 1, System.currentTimeMillis + (1000 * 8 << (count + 2)))
         }
     }

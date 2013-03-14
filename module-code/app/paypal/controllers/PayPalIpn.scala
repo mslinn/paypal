@@ -46,7 +46,7 @@ object PaypalIPN {
 trait BasePaypalTrait {
 
   // todo replace the clunky HttpClient code from LiftWeb with this
-  def synchronousPost(url: String, dataMap: Map[String, Seq[String]], timeout: Duration=Duration.create(30, TimeUnit.SECONDS)): String = {
+  def synchronousPost(url: String, dataMap: NameValuePairs, timeout: Duration=Duration.create(30, TimeUnit.SECONDS)): String = {
     import play.api.libs.ws.{ WS, Response => WSResponse }
     import ExecutionContext.Implicits.global
     val params = dataMap.map { case (k, v) => "%s=%s".format(k, URLEncoder.encode(v.head, "UTF-8")) }.mkString("&")
@@ -74,9 +74,10 @@ object Factories {
 import Factories._
 val ipn = new PaypalIPN[MyPaypalTransaction, MyCustomerAddress, MyTransactionProcessor]
 </code> */
-class PaypalIPN[PPT <: AbstractPaypalTransaction, CA <: AbstractCustomerAddress, TP <: AbstractTransactionProcessor]
-        (implicit pptFactory: (Map[String, Seq[String]]) => PPT,
-                  caFactory: (Map[String, Seq[String]]) => CA,
+class PaypalIPN[PPT<:AbstractPaypalTransaction, PPTS<:AbstractPaypalTransactionFinder, CA<:AbstractCustomerAddress, TP<:AbstractTransactionProcessor]
+        (implicit pptFactory: (NameValuePairs) => PPT,
+                  pptFinder: () => PPTS,
+                  caFactory: (NameValuePairs) => CA,
                   tpFactory: (PPT, CA) => TP) extends BasePaypalTrait {
 
   /** @see [[https://www.paypal.com/cgi-bin/webscr?cmd=p/acc/ipn-info-outside]] */
@@ -89,14 +90,14 @@ class PaypalIPN[PPT <: AbstractPaypalTransaction, CA <: AbstractCustomerAddress,
             val paymentStatus = dataMap.getOrElse("payment_status", List("")).head
             if (paymentStatus == "Completed") {
               val txn: PPT = pptFactory(dataMap)
-              PPT.findByTxnId(txn.txnId) match {
+              pptFinder().findByTxnId(txn.txnId) match {
                 case Some(txn) =>
                   Logger.info("Ignoring duplicate transaction: " + txn.toString)
 
                 case None =>
                   // Validate that the "receiver_email" is an email address registered in our PayPal account
-                  if (txn.receiverEmail!=receiverEmail) {
-                    Logger.warn("Potential fraud attempt: receiver_email did not match in " + txn.toString)
+                  if (txn.receiverEmail!=PaypalRules.receiverEmail) {
+                    Logger.warn(s"Potential fraud attempt: receiver_email did not match ${PaypalRules.receiverEmail} in ${txn.toString}")
                   } else {
                     val customerAddress = caFactory(dataMap)
                     tpFactory(txn, customerAddress).processTransaction
@@ -107,7 +108,7 @@ class PaypalIPN[PPT <: AbstractPaypalTransaction, CA <: AbstractCustomerAddress,
             }
 
           case response => // most likely response is "INVALID"
-            Logger.warn("Could not verify Paypal transaction via POST to %s; verification response: '%s'".format(url, response))
+            Logger.warn("Could not verify Paypal transaction via POST to %s; verification response: '%s'".format(PaypalRules.url, response))
         }
 
       case None =>

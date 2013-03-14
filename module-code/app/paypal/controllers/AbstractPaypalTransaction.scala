@@ -19,12 +19,12 @@ package paypal.controllers
 import play.api.mvc.RequestHeader
 import play.api.Logger
 
-//object AbstractPaypalTransaction {
-//  def findByTxnId(id: String): AbstractPaypalTransaction
-//}
+abstract class AbstractPaypalTransactionFinder {
+  def findByTxnId(txnId: String): Option[AbstractPaypalTransaction]
+}
 
 /** Extend this class for a concrete implementation that can be persisted */
-abstract class AbstractPaypalTransaction(dataMap: Map[String, Seq[String]]) {
+abstract class AbstractPaypalTransaction(dataMap: NameValuePairs) {
   private[controllers] val formNVP = new FormNVP(dataMap)
   val txnId: String = formNVP.maybeGetString("item_name").getOrElse("")
   val receiverEmail: String = formNVP.maybeGetString("receiver_email").getOrElse("")
@@ -37,4 +37,4 @@ abstract class AbstractTransactionProcessor(txn: String, customerAddress: Abstra
     Logger.info("Ignoring duplicate transaction: " + txn.toString)
 }
 
-abstract class AbstractCustomerAddress(dataMap: Map[String, Seq[String]])
+abstract class AbstractCustomerAddress(dataMap: NameValuePairs)
